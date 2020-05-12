@@ -4,11 +4,13 @@ from collections import defaultdict
 import time
 import queue
 import random
+import wandb
 
 
 class Corpus:
     def __init__(self, args, train_data, validation_data, test_data, entity2id,
-                 relation2id, headTailSelector, batch_size, valid_to_invalid_samples_ratio, unique_entities_train, get_2hop=False):
+                 relation2id, headTailSelector, batch_size, valid_to_invalid_samples_ratio, unique_entities_train,
+                 get_2hop=False):
         self.train_triples = train_data[0]
 
         # Converting to sparse tensor
@@ -55,8 +57,9 @@ class Corpus:
 
         self.valid_triples_dict = {j: i for i, j in enumerate(
             self.train_triples + self.validation_triples + self.test_triples)}
-        print("Total triples count {}, training triples {}, validation_triples {}, test_triples {}".format(len(self.valid_triples_dict), len(self.train_indices),
-                                                                                                           len(self.validation_indices), len(self.test_indices)))
+        print("Total triples count {}, training triples {}, validation_triples {}, test_triples {}".format(
+            len(self.valid_triples_dict), len(self.train_indices),
+            len(self.validation_indices), len(self.test_indices)))
 
         # For training purpose
         self.batch_indices = np.empty(
@@ -75,9 +78,9 @@ class Corpus:
                             self.batch_size * (iter_num + 1))
 
             self.batch_indices[:self.batch_size,
-                               :] = self.train_indices[indices, :]
+            :] = self.train_indices[indices, :]
             self.batch_values[:self.batch_size,
-                              :] = self.train_values[indices, :]
+            :] = self.train_values[indices, :]
 
             last_index = self.batch_size
 
@@ -106,10 +109,11 @@ class Corpus:
 
                     for j in range(self.invalid_valid_ratio // 2):
                         current_index = last_index * \
-                            (self.invalid_valid_ratio // 2) + \
-                            (i * (self.invalid_valid_ratio // 2) + j)
+                                        (self.invalid_valid_ratio // 2) + \
+                                        (i * (self.invalid_valid_ratio // 2) + j)
 
-                        while (self.batch_indices[last_index + current_index, 0], self.batch_indices[last_index + current_index, 1],
+                        while (self.batch_indices[last_index + current_index, 0],
+                               self.batch_indices[last_index + current_index, 1],
                                random_entities[current_index]) in self.valid_triples_dict.keys():
                             random_entities[current_index] = np.random.randint(
                                 0, len(self.entity2id))
@@ -123,7 +127,7 @@ class Corpus:
 
         else:
             last_iter_size = len(self.train_indices) - \
-                self.batch_size * iter_num
+                             self.batch_size * iter_num
             self.batch_indices = np.empty(
                 (last_iter_size * (self.invalid_valid_ratio + 1), 3)).astype(np.int32)
             self.batch_values = np.empty(
@@ -132,9 +136,9 @@ class Corpus:
             indices = range(self.batch_size * iter_num,
                             len(self.train_indices))
             self.batch_indices[:last_iter_size,
-                               :] = self.train_indices[indices, :]
+            :] = self.train_indices[indices, :]
             self.batch_values[:last_iter_size,
-                              :] = self.train_values[indices, :]
+            :] = self.train_values[indices, :]
 
             last_index = last_iter_size
 
@@ -163,10 +167,11 @@ class Corpus:
 
                     for j in range(self.invalid_valid_ratio // 2):
                         current_index = last_index * \
-                            (self.invalid_valid_ratio // 2) + \
-                            (i * (self.invalid_valid_ratio // 2) + j)
+                                        (self.invalid_valid_ratio // 2) + \
+                                        (i * (self.invalid_valid_ratio // 2) + j)
 
-                        while (self.batch_indices[last_index + current_index, 0], self.batch_indices[last_index + current_index, 1],
+                        while (self.batch_indices[last_index + current_index, 0],
+                               self.batch_indices[last_index + current_index, 1],
                                random_entities[current_index]) in self.valid_triples_dict.keys():
                             random_entities[current_index] = np.random.randint(
                                 0, len(self.entity2id))
@@ -187,9 +192,9 @@ class Corpus:
         indices = random.sample(range(len(current_batch_indices)), batch_size)
 
         self.batch_indices[:batch_size,
-                           :] = current_batch_indices[indices, :]
+        :] = current_batch_indices[indices, :]
         self.batch_values[:batch_size,
-                          :] = np.ones((batch_size, 1))
+        :] = np.ones((batch_size, 1))
 
         last_index = batch_size
 
@@ -214,8 +219,8 @@ class Corpus:
 
                 for j in range(self.invalid_valid_ratio // 2):
                     current_index = last_index * \
-                        (self.invalid_valid_ratio // 2) + \
-                        (i * (self.invalid_valid_ratio // 2) + j)
+                                    (self.invalid_valid_ratio // 2) + \
+                                    (i * (self.invalid_valid_ratio // 2) + j)
 
                     self.batch_indices[last_index + current_index,
                                        3] = random_entities[current_index]
@@ -235,7 +240,7 @@ class Corpus:
             target = data[0].data.item()
             value = data[2].data.item()
 
-            if(source not in graph.keys()):
+            if (source not in graph.keys()):
                 graph[source] = {}
                 graph[source][target] = value
             else:
@@ -256,11 +261,11 @@ class Corpus:
         q = queue.Queue()
         q.put((source, -1))
 
-        while(not q.empty()):
+        while (not q.empty()):
             top = q.get()
             if top[0] in graph.keys():
                 for target in graph[top[0]].keys():
-                    if(target in visit.keys()):
+                    if (target in visit.keys()):
                         continue
                     else:
                         q.put((target, graph[top[0]][target]))
@@ -277,18 +282,18 @@ class Corpus:
 
         neighbors = {}
         for target in visit.keys():
-            if(distance[target] != nbd_size):
+            if (distance[target] != nbd_size):
                 continue
             edges = [-1, parent[target][1]]
             relations = []
             entities = [target]
             temp = target
-            while(parent[temp] != (-1, -1)):
+            while (parent[temp] != (-1, -1)):
                 relations.append(parent[temp][1])
                 entities.append(parent[temp][0])
                 temp = parent[temp][0]
 
-            if(distance[target] in neighbors.keys()):
+            if (distance[target] in neighbors.keys()):
                 neighbors[distance[target]].append(
                     (tuple(relations), tuple(entities[:-1])))
             else:
@@ -305,8 +310,8 @@ class Corpus:
             # st_time = time.time()
             temp_neighbors = self.bfs(self.graph, source, nbd_size)
             for distance in temp_neighbors.keys():
-                if(source in neighbors.keys()):
-                    if(distance in neighbors[source].keys()):
+                if (source in neighbors.keys()):
+                    if (distance in neighbors[source].keys()):
                         neighbors[source][distance].append(
                             temp_neighbors[distance])
                     else:
@@ -330,7 +335,7 @@ class Corpus:
                 nhop_list = node_neighbors[source][nbd_size]
 
                 for i, tup in enumerate(nhop_list):
-                    if(args.partial_2hop and i >= 2):
+                    if (args.partial_2hop and i >= 2):
                         break
 
                     count += 1
@@ -379,7 +384,7 @@ class Corpus:
                 new_x_batch_tail = np.tile(
                     batch_indices[i, :], (len(self.entity2id), 1))
 
-                if(batch_indices[i, 0] not in unique_entities or batch_indices[i, 2] not in unique_entities):
+                if (batch_indices[i, 0] not in unique_entities or batch_indices[i, 2] not in unique_entities):
                     continue
 
                 new_x_batch_head[:, 0] = entity_list
@@ -442,7 +447,7 @@ class Corpus:
 
                     scores_head = torch.cat(
                         [scores1_head, scores2_head, scores3_head, scores4_head], dim=0)
-                    #scores5_head, scores6_head, scores7_head, scores8_head,
+                    # scores5_head, scores6_head, scores7_head, scores8_head,
                     # cores9_head, scores10_head], dim=0)
                 else:
                     scores_head = model.batch_test(new_x_batch_head)
@@ -622,3 +627,11 @@ class Corpus:
         print("Hits@1 are {}".format(cumulative_hits_one))
         print("Mean rank {}".format(cumulative_mean_rank))
         print("Mean Reciprocal Rank {}".format(cumulative_mean_recip_rank))
+        metrics = {
+            "Hits@100": cumulative_hits_100,
+            "Hits@10": cumulative_hits_ten,
+            "Hits@3": cumulative_hits_three,
+            "Hits@1": cumulative_mean_rank,
+            "Mean Reciprocal Rank": cumulative_mean_recip_rank
+        }
+        wandb.log(metrics)
