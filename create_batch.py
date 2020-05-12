@@ -631,7 +631,8 @@ class Corpus:
             "Hits@100": cumulative_hits_100,
             "Hits@10": cumulative_hits_ten,
             "Hits@3": cumulative_hits_three,
-            "Hits@1": cumulative_mean_rank,
+            "Hits@1": cumulative_hits_one,
+            "Mean Rank": cumulative_mean_rank,
             "Mean Reciprocal Rank": cumulative_mean_recip_rank
         }
         wandb.log(metrics)
