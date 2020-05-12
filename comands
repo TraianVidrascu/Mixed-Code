@@ -1,0 +1,3 @@
+run kinship model
+
+python main.py --data ./data/kinship/ --get_2hop False --margin 1 --out_channels 50 --drop_conv 0.3 --output_folder ./checkpoints/kinship/out/ --alpha 0.2 --valid_invalid_ratio_conv 10 --weight_decay_gat 1e-5 --lr 1e-3 --epochs_conv 400 --weight_decay_conv 1e-5 --batch_size_gat 8544
