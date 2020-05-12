@@ -22,8 +22,8 @@ class SpGAT(nn.Module):
         super(SpGAT, self).__init__()
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(self.dropout)
-        self.lambda_param_first = nn.Parameter(torch.tensor(0.5), requires_grad=True)
-        self.lambda_param_last = nn.Parameter(torch.tensor(0.5), requires_grad=True)
+        self.lambda_layer_input = nn.Linear(2 * nhid * nheads, 1)
+        self.lambda_layer_output = nn.Linear(2 * nhid * nheads, 1)
 
         self.attentions_inbound = [SpGraphAttentionLayer(num_nodes, nfeat,
                                                          nhid,
@@ -81,7 +81,8 @@ class SpGAT(nn.Module):
         x_out = torch.cat([att(x, edge_list_outbound, edge_embed, edge_list_nhop_outbound, edge_embed_nhop)
                            for att in self.attentions_inbound], dim=1)
 
-        x = self.lambda_param_first * x_in + (1 - self.lambda_param_first) * x_out
+        lambda_param = self.lambda_layer_input(torch.cat([x_in, x_out], dim=1))
+        x = lambda_param * x_in + (1 - lambda_param) * x_out
         x = self.dropout_layer(x)
 
         out_relation_1 = relation_embed.mm(self.W)
@@ -95,7 +96,8 @@ class SpGAT(nn.Module):
         x_out = F.elu(self.out_att_inbound(x, edge_list_outbound, edge_embed,
                                            edge_list_nhop_outbound, edge_embed_nhop))
 
-        x = self.lambda_param_last * x_in + (1 - self.lambda_param_last) * x_out
+        lambda_param = self.lambda_layer_output(torch.cat([x_in, x_out], dim=1))
+        x = lambda_param * x_in + (1 - lambda_param) * x_out
         return x, out_relation_1
 
 

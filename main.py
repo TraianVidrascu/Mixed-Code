@@ -30,7 +30,7 @@ def parse_args():
     args = argparse.ArgumentParser()
     # network arguments
     args.add_argument("-data", "--data",
-                      default="./data/WN18RR/", help="data directory")
+                      default="./data/kinship/", help="data directory")
     args.add_argument("-e_g", "--epochs_gat", type=int,
                       default=3600, help="Number of epochs")
     args.add_argument("-e_c", "--epochs_conv", type=int,
@@ -256,10 +256,10 @@ def train_gat(args):
         print("Epoch {} , average loss {} , epoch_time {}".format(
             epoch, sum(epoch_loss) / len(epoch_loss), time.time() - start_time))
         epoch_losses.append(sum(epoch_loss) / len(epoch_loss))
-        wandb.log({'epoch_loss':epoch_losses[-1]})
-
-        save_model(model_gat, args.data, epoch,
-                   args.output_folder)
+        wandb.log({'epoch_loss': epoch_losses[-1]})
+        if (epoch + 1) % 200 == 0:
+            save_model(model_gat, args.data, epoch,
+                       args.output_folder)
 
 
 def train_conv(args):
@@ -350,9 +350,10 @@ def train_conv(args):
         print("Epoch {} , average loss {} , epoch_time {}".format(
             epoch, sum(epoch_loss) / len(epoch_loss), time.time() - start_time))
         epoch_losses.append(sum(epoch_loss) / len(epoch_loss))
-        wandb.log({'epoch_loss':epoch_losses[-1]})
-        save_model(model_conv, args.data, epoch,
-                   args.output_folder + "conv/")
+        wandb.log({'epoch_loss': epoch_losses[-1]})
+        if (epoch + 1) % 50 == 0:
+            save_model(model_conv, args.data, epoch,
+                       args.output_folder + "conv/")
 
 
 def evaluate_conv(args, unique_entities):
