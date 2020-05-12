@@ -30,13 +30,13 @@ def parse_args():
     args = argparse.ArgumentParser()
     # network arguments
     args.add_argument("-data", "--data",
-                      default="./data/kinship/", help="data directory")
+                      default="./data/WN18RR/", help="data directory")
     args.add_argument("-e_g", "--epochs_gat", type=int,
                       default=3600, help="Number of epochs")
     args.add_argument("-e_c", "--epochs_conv", type=int,
                       default=200, help="Number of epochs")
     args.add_argument("-w_gat", "--weight_decay_gat", type=float,
-                      default=1e-6, help="L2 reglarization for gat")
+                      default=5e-6, help="L2 reglarization for gat")
     args.add_argument("-w_conv", "--weight_decay_conv", type=float,
                       default=1e-5, help="L2 reglarization for conv")
     args.add_argument("-pre_emb", "--pretrained_emb", type=bool,
@@ -44,7 +44,7 @@ def parse_args():
     args.add_argument("-emb_size", "--embedding_size", type=int,
                       default=50, help="Size of embeddings (if pretrained not used)")
     args.add_argument("-l", "--lr", type=float, default=1e-3)
-    args.add_argument("-g2hop", "--get_2hop", type=bool, default=True)
+    args.add_argument("-g2hop", "--get_2hop", type=bool, default=False)
     args.add_argument("-u2hop", "--use_2hop", type=bool, default=True)
     args.add_argument("-p2hop", "--partial_2hop", type=bool, default=False)
     args.add_argument("-outfolder", "--output_folder",
@@ -60,11 +60,11 @@ def parse_args():
     args.add_argument("-alpha", "--alpha", type=float,
                       default=0.2, help="LeakyRelu alphs for SpGAT layer")
     args.add_argument("-out_dim", "--entity_out_dim", type=int, nargs='+',
-                      default=[400, 400], help="Entity output embedding dimensions")
+                      default=[100, 200], help="Entity output embedding dimensions")
     args.add_argument("-h_gat", "--nheads_GAT", type=int, nargs='+',
                       default=[2, 2], help="Multihead attention SpGAT")
     args.add_argument("-margin", "--margin", type=float,
-                      default=1, help="Margin used in hinge loss")
+                      default=5, help="Margin used in hinge loss")
 
     # arguments for convolution network
     args.add_argument("-b_conv", "--batch_size_conv", type=int,
