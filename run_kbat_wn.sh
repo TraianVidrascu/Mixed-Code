@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=KBAT_wn18
+#SBATCH --job-name=DKBAT_wn18
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
