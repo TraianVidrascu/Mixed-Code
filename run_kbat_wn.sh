@@ -11,4 +11,4 @@
 
 
 conda activate dgat
-python main.py --get_2hop True --data ./data/WN18RR/ --output_folder ./checkpoints/wn/out/
+python main.py --get_2hop False --partial_2hop False --data ./data/WN18RR/ --output_folder ./checkpoints/wn/out/
