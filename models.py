@@ -8,6 +8,35 @@ from layers import SpGraphAttentionLayer, ConvKB
 CUDA = torch.cuda.is_available()  # checking cuda availability
 
 
+class MergeLayer(nn.Module):
+    def __init__(self, h_size, device='cpu'):
+        super(MergeLayer, self).__init__()
+        self.weight_inbound = nn.Linear(h_size, h_size, bias=True)
+        self.weight_outbound = nn.Linear(h_size, h_size, bias=True)
+        self.lambda_layer = nn.Linear(h_size * 2, 1, bias=True)
+        self.init_params()
+        self.to(device)
+
+    def forward(self, h_inbound, h_outbound):
+        h_inbound = self.weight_inbound(h_inbound)
+        h_outbound = self.weight_outbound(h_outbound)
+        lambda_param = self.lambda_layer(torch.cat([h_inbound, h_outbound], dim=1))
+        lambda_param = torch.sigmoid(lambda_param)
+        h = lambda_param * h_inbound + (1 - lambda_param) * h_outbound
+        h = F.elu(h)
+        h = F.normalize(h, dim=1, p=2)
+        return h
+
+    def init_params(self):
+        nn.init.xavier_normal_(self.weight_inbound.weight, gain=1.414)
+        nn.init.xavier_normal_(self.weight_outbound.weight, gain=1.414)
+        nn.init.xavier_normal_(self.lambda_layer.weight, gain=1.414)
+
+        nn.init.zeros_(self.weight_inbound.bias)
+        nn.init.zeros_(self.weight_outbound.bias)
+        nn.init.zeros_(self.lambda_layer.bias)
+
+
 class SpGAT(nn.Module):
     def __init__(self, num_nodes, nfeat, nhid, relation_dim, dropout, alpha, nheads):
         """
@@ -22,8 +51,8 @@ class SpGAT(nn.Module):
         super(SpGAT, self).__init__()
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(self.dropout)
-        self.lambda_layer_input = nn.Linear(2 * nhid * nheads, 1)
-        self.lambda_layer_output = nn.Linear(2 * nhid * nheads, 1)
+        self.merge_input = MergeLayer(nhid * nheads)
+        self.merge_output = MergeLayer(nhid * nheads)
 
         self.attentions_inbound = [SpGraphAttentionLayer(num_nodes, nfeat,
                                                          nhid,
@@ -81,8 +110,7 @@ class SpGAT(nn.Module):
         x_out = torch.cat([att(x, edge_list_outbound, edge_embed, edge_list_nhop_outbound, edge_embed_nhop)
                            for att in self.attentions_inbound], dim=1)
 
-        lambda_param = self.lambda_layer_input(torch.cat([x_in, x_out], dim=1))
-        x = lambda_param * x_in + (1 - lambda_param) * x_out
+        x = self.merge_input(x_in, x_out)
         x = self.dropout_layer(x)
 
         out_relation_1 = relation_embed.mm(self.W)
@@ -96,8 +124,7 @@ class SpGAT(nn.Module):
         x_out = F.elu(self.out_att_inbound(x, edge_list_outbound, edge_embed,
                                            edge_list_nhop_outbound, edge_embed_nhop))
 
-        lambda_param = self.lambda_layer_output(torch.cat([x_in, x_out], dim=1))
-        x = lambda_param * x_in + (1 - lambda_param) * x_out
+        x = self.merge_output(x_in, x_out)
         return x, out_relation_1
 
 

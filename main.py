@@ -257,7 +257,7 @@ def train_gat(args):
             epoch, sum(epoch_loss) / len(epoch_loss), time.time() - start_time))
         epoch_losses.append(sum(epoch_loss) / len(epoch_loss))
         wandb.log({'epoch_loss': epoch_losses[-1]})
-        if (epoch + 1) % 200 == 0:
+        if (epoch + 1) % 200 == 0 or (epoch + 1) == args.epochs_gat:
             save_model(model_gat, args.data, epoch,
                        args.output_folder)
 
@@ -351,7 +351,7 @@ def train_conv(args):
             epoch, sum(epoch_loss) / len(epoch_loss), time.time() - start_time))
         epoch_losses.append(sum(epoch_loss) / len(epoch_loss))
         wandb.log({'epoch_loss': epoch_losses[-1]})
-        if (epoch + 1) % 50 == 0:
+        if (epoch + 1) % 50 == 0 or (epoch + 1) == args.epochs_conv:
             save_model(model_conv, args.data, epoch,
                        args.output_folder + "conv/")
 
