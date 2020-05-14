@@ -103,12 +103,14 @@ class SpGraphAttentionLayer(nn.Module):
         N = input.size()[0]
 
         # Self-attention on the nodes - Shared attention mechanism
-        edge = torch.cat((edge[:, :], edge_list_nhop[:, :]), dim=1)
-        edge_embed = torch.cat(
-            (edge_embed[:, :], edge_embed_nhop[:, :]), dim=0)
+        if edge_list_nhop is not None:
+            edge = torch.cat((edge[:, :], edge_list_nhop[:, :]), dim=1)
+            edge_embed = torch.cat(
+                (edge_embed[:, :], edge_embed_nhop[:, :]), dim=0)
 
         edge_h = torch.cat(
             (input[edge[0, :], :], input[edge[1, :], :], edge_embed[:, :]), dim=1).t()
+
         # edge_h: (2*in_dim + nrela_dim) x E
 
         edge_m = self.a.mm(edge_h)

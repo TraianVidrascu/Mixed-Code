@@ -1,1 +1,1 @@
-python main.py --data ./data/kinship/ --epochs_gat 3000 --epochs_conv 400 --weight_decay_gat 0.00001 --get_2hop True --partial_2hop True --batch_size_gat 272115 --margin 1 --out_channels 50 --drop_conv 0.3 --output_folder ./checkpoints/fb/out/#!/usr/bin/env bash
+python main.py --data ./data/kinship/ --epochs_gat 3000 --epochs_conv 400 --weight_decay_gat 0.00001 --use_2hop 0 --get_2hop 0 --partial_2hop 0 --batch_size_gat 272115 --margin 1 --out_channels 50 --drop_conv 0.3 --output_folder ./checkpoints/fb/out/

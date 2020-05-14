@@ -97,13 +97,17 @@ class SpGAT(nn.Module):
     def forward(self, Corpus_, batch_inputs, entity_embeddings, relation_embed,
                 edge_list, edge_type, edge_embed, edge_list_nhop, edge_type_nhop):
         edge_list_outbound = torch.stack([edge_list[1, :], edge_list[0, :]])
-        edge_list_nhop_outbound = torch.stack([edge_list_nhop[1, :], edge_list_nhop[0, :]])
-
+        if edge_list_nhop is not None:
+            edge_list_nhop_outbound = torch.stack([edge_list_nhop[1, :], edge_list_nhop[0, :]])
+        else:
+            edge_list_nhop_outbound = None
         x = entity_embeddings
 
-        edge_embed_nhop = relation_embed[
-                              edge_type_nhop[:, 0]] + relation_embed[edge_type_nhop[:, 1]]
-
+        if edge_type_nhop is not None:
+            edge_embed_nhop = relation_embed[
+                                  edge_type_nhop[:, 0]] + relation_embed[edge_type_nhop[:, 1]]
+        else:
+            edge_embed_nhop = None
         x_in = torch.cat([att(x, edge_list, edge_embed, edge_list_nhop, edge_embed_nhop)
                           for att in self.attentions_inbound], dim=1)
 
@@ -116,9 +120,11 @@ class SpGAT(nn.Module):
         out_relation_1 = relation_embed.mm(self.W)
 
         edge_embed = out_relation_1[edge_type]
-        edge_embed_nhop = out_relation_1[
-                              edge_type_nhop[:, 0]] + out_relation_1[edge_type_nhop[:, 1]]
-
+        if edge_type_nhop is not None:
+            edge_embed_nhop = out_relation_1[
+                                  edge_type_nhop[:, 0]] + out_relation_1[edge_type_nhop[:, 1]]
+        else:
+            edge_embed_nhop = None
         x_in = F.elu(self.out_att_inbound(x, edge_list, edge_embed,
                                           edge_list_nhop, edge_embed_nhop))
         x_out = F.elu(self.out_att_inbound(x, edge_list_outbound, edge_embed,
@@ -176,17 +182,21 @@ class SpKBGATModified(nn.Module):
         # getting edge list
         edge_list = adj[0]
         edge_type = adj[1]
-
-        edge_list_nhop = torch.cat(
-            (train_indices_nhop[:, 3].unsqueeze(-1), train_indices_nhop[:, 0].unsqueeze(-1)), dim=1).t()
-        edge_type_nhop = torch.cat(
-            [train_indices_nhop[:, 1].unsqueeze(-1), train_indices_nhop[:, 2].unsqueeze(-1)], dim=1)
+        if not train_indices_nhop is None:
+            edge_list_nhop = torch.cat(
+                (train_indices_nhop[:, 3].unsqueeze(-1), train_indices_nhop[:, 0].unsqueeze(-1)), dim=1).t()
+            edge_type_nhop = torch.cat(
+                [train_indices_nhop[:, 1].unsqueeze(-1), train_indices_nhop[:, 2].unsqueeze(-1)], dim=1)
+        else:
+            edge_list_nhop = None
+            edge_type_nhop = None
 
         if (CUDA):
             edge_list = edge_list.cuda()
             edge_type = edge_type.cuda()
-            edge_list_nhop = edge_list_nhop.cuda()
-            edge_type_nhop = edge_type_nhop.cuda()
+            if edge_list_nhop is not None:
+                edge_list_nhop = edge_list_nhop.cuda()
+                edge_type_nhop = edge_type_nhop.cuda()
 
         edge_embed = self.relation_embeddings[edge_type]
 

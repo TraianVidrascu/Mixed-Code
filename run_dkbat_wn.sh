@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=DKBAT_wn18
+#SBATCH --job-name=DKBAT_wn18_no_paths
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --time=24:00:00
@@ -11,4 +11,4 @@
 
 
 conda activate dgat
-python main.py --get_2hop False --partial_2hop False --data ./data/WN18RR/ --output_folder ./checkpoints/wn/out/
+python main.py --use_2hop 0 --get_2hop 0 --partial_2hop 0 --data ./data/WN18RR/ --output_folder ./checkpoints/wn/out/

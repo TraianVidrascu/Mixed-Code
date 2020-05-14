@@ -44,11 +44,11 @@ def parse_args():
     args.add_argument("-emb_size", "--embedding_size", type=int,
                       default=50, help="Size of embeddings (if pretrained not used)")
     args.add_argument("-l", "--lr", type=float, default=1e-3)
-    args.add_argument("-g2hop", "--get_2hop", type=bool, default=False)
-    args.add_argument("-u2hop", "--use_2hop", type=bool, default=True)
-    args.add_argument("-p2hop", "--partial_2hop", type=bool, default=False)
+    args.add_argument("-g2hop", "--get_2hop", type=int, default=0)
+    args.add_argument("-u2hop", "--use_2hop", type=int, default=1)
+    args.add_argument("-p2hop", "--partial_2hop", type=int, default=0)
     args.add_argument("-outfolder", "--output_folder",
-                      default="./checkpoints/wn/out/", help="Folder name to save the models.")
+                      default="./checkpoints/pula/out/", help="Folder name to save the models.")
 
     # arguments for GAT
     args.add_argument("-b_gat", "--batch_size_gat", type=int,
@@ -78,11 +78,14 @@ def parse_args():
     args.add_argument("-drop_conv", "--drop_conv", type=float,
                       default=0.0, help="Dropout probability for convolution layer")
 
-    args = args.parse_args()
+    args = args.parse_known_args()
     return args
 
 
-args = parse_args()
+args = parse_args()[0]
+args.get_2hop = True if args.get_2hop == 1 else False
+args.use_2hop = True if args.use_2hop == 1 else False
+args.partial_2hop = True if args.partial_2hop == 1 else False
 
 
 # %%
@@ -192,13 +195,15 @@ def train_gat(args):
         current_batch_2hop_indices = Corpus_.get_batch_nhop_neighbors_all(args,
                                                                           Corpus_.unique_entities_train,
                                                                           node_neighbors_2hop)
-
-    if CUDA:
-        current_batch_2hop_indices = Variable(
-            torch.LongTensor(current_batch_2hop_indices)).cuda()
+    if args.use_2hop:
+        if CUDA:
+            current_batch_2hop_indices = Variable(
+                torch.LongTensor(current_batch_2hop_indices)).cuda()
+        else:
+            current_batch_2hop_indices = Variable(
+                torch.LongTensor(current_batch_2hop_indices))
     else:
-        current_batch_2hop_indices = Variable(
-            torch.LongTensor(current_batch_2hop_indices))
+        current_batch_2hop_indices = None
 
     epoch_losses = []  # losses of all epochs
     print("Number of epochs {}".format(args.epochs_gat))

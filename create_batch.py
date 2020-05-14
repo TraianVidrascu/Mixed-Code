@@ -636,3 +636,22 @@ class Corpus:
             "Mean Reciprocal Rank": cumulative_mean_recip_rank
         }
         wandb.log(metrics)
+
+        metrics = {
+            "tail Hits@100": sum(average_hits_at_100_tail) / len(average_hits_at_100_tail),
+            "tail Hits@10": sum(average_hits_at_ten_tail) / len(average_hits_at_ten_tail),
+            "tail Hits@3": sum(average_hits_at_three_tail) / len(average_hits_at_three_tail),
+            "tail Hits@1": sum(average_hits_at_one_tail) / len(average_hits_at_one_tail),
+            "tail Mean Rank": sum(average_mean_rank_tail) / len(average_mean_rank_tail),
+            "tail Mean Reciprocal Rank": sum(average_mean_recip_rank_tail) / len(average_mean_recip_rank_tail)
+        }
+        wandb.log(metrics)
+        metrics = {
+            "head Hits@100": sum(average_hits_at_100_tail) / len(average_hits_at_100_tail),
+            "head Hits@10": sum(average_hits_at_ten_tail) / len(average_hits_at_ten_tail),
+            "head Hits@3": sum(average_hits_at_three_tail) / len(average_hits_at_three_tail),
+            "head Hits@1": sum(average_hits_at_one_tail) / len(average_hits_at_one_tail),
+            "head Mean Rank": sum(average_mean_rank_tail) / len(average_mean_rank_tail),
+            "head Mean Reciprocal Rank": sum(average_mean_recip_rank_tail) / len(average_mean_recip_rank_tail)
+        }
+        wandb.log(metrics)
