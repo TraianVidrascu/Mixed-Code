@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import time
 from layers import SpGraphAttentionLayer, ConvKB
+from torch_scatter import scatter_add
 
 CUDA = torch.cuda.is_available()  # checking cuda availability
 
@@ -37,6 +38,29 @@ class MergeLayer(nn.Module):
         nn.init.zeros_(self.lambda_layer.bias)
 
 
+class RelationLayer(nn.Module):
+    def __init__(self, in_size, out_size, device):
+        super(RelationLayer, self).__init__()
+        # relation layer
+        # W matrix to convert h_input to h_output dimension
+        self.W = nn.Parameter(torch.zeros(size=(in_size, out_size)))
+        self.weights_rel = nn.Linear(in_size, out_size, bias=False)
+        self.init_params()
+
+        self.to(device)
+        self.device = device
+
+    def init_params(self):
+        nn.init.xavier_normal_(self.weights_rel.weight, gain=1.414)
+        nn.init.xavier_uniform_(self.W.data, gain=1.414)
+
+    def forward(self, g_initial, c_ijk, edge_type):
+        g = scatter_add(c_ijk, edge_type, dim=0).squeeze()
+        g_prime = self.weights_rel(g_initial) + g.mm(self.W)
+        g_prime = F.normalize(g_prime, p=2, dim=-1)
+        return g_prime
+
+
 class SpGAT(nn.Module):
     def __init__(self, num_nodes, nfeat, nhid, relation_dim, dropout, alpha, nheads):
         """
@@ -49,10 +73,15 @@ class SpGAT(nn.Module):
 
         """
         super(SpGAT, self).__init__()
+        if CUDA:
+            dev = 'cuda'
+        else:
+            dev = 'cpu'
         self.dropout = dropout
         self.dropout_layer = nn.Dropout(self.dropout)
         self.merge_input = MergeLayer(nhid * nheads)
         self.merge_output = MergeLayer(nhid * nheads)
+        self.rel_layer = RelationLayer(relation_dim, nhid * nheads, dev)
 
         self.attentions_inbound = [SpGraphAttentionLayer(num_nodes, nfeat,
                                                          nhid,
@@ -75,10 +104,6 @@ class SpGAT(nn.Module):
 
         for i, attention in enumerate(self.attentions_inbound):
             self.add_module('attention_outbound_{}'.format(i), attention)
-
-        # W matrix to convert h_input to h_output dimension
-        self.W = nn.Parameter(torch.zeros(size=(relation_dim, nheads * nhid)))
-        nn.init.xavier_uniform_(self.W.data, gain=1.414)
 
         self.out_att_inbound = SpGraphAttentionLayer(num_nodes, nhid * nheads,
                                                      nheads * nhid, nheads * nhid,
@@ -117,7 +142,7 @@ class SpGAT(nn.Module):
         x = self.merge_input(x_in, x_out)
         x = self.dropout_layer(x)
 
-        out_relation_1 = relation_embed.mm(self.W)
+        out_relation_1 = self.rel_layer(relation_embed, edge_embed, edge_type)
 
         edge_embed = out_relation_1[edge_type]
         if edge_type_nhop is not None:
