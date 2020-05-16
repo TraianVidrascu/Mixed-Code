@@ -5,7 +5,6 @@ import time
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-
 CUDA = torch.cuda.is_available()
 
 
@@ -23,7 +22,6 @@ class ConvKB(nn.Module):
         nn.init.xavier_uniform_(self.conv_layer.weight, gain=1.414)
 
     def forward(self, conv_input):
-
         batch_size, length, dim = conv_input.size()
         # assuming inputs are of the form ->
         conv_input = conv_input.transpose(1, 2)
@@ -41,6 +39,7 @@ class ConvKB(nn.Module):
 
 class SpecialSpmmFunctionFinal(torch.autograd.Function):
     """Special function for only sparse region backpropataion layer."""
+
     @staticmethod
     def forward(ctx, edge, edge_w, N, E, out_features):
         # assert indices.requires_grad == False
@@ -60,7 +59,7 @@ class SpecialSpmmFunctionFinal(torch.autograd.Function):
         if ctx.needs_input_grad[1]:
             edge_sources = ctx.indices
 
-            if(CUDA):
+            if (CUDA):
                 edge_sources = edge_sources.cuda()
 
             grad_values = grad_output[edge_sources]
@@ -147,9 +146,12 @@ class SpGraphAttentionLayer(nn.Module):
         assert not torch.isnan(h_prime).any()
         if self.concat:
             # if this layer is not last layer,
-            return F.elu(h_prime)
+            h_prime = F.elu(h_prime)
+            h_prime = F.normalize(h_prime, p=2, dim=-1)
+            return h_prime
         else:
             # if this layer is last layer,
+            h_prime = F.normalize(h_prime, p=2, dim=-1)
             return h_prime
 
     def __repr__(self):
