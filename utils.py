@@ -19,14 +19,17 @@ import logging
 import time
 import pickle
 
-
 CUDA = torch.cuda.is_available()
 
 
-def save_model(model, name, epoch, folder_name):
+def save_model(model, name, epoch, folder_name, use_paths=False):
     print("Saving Model")
-    torch.save(model.state_dict(),
-               (folder_name + "trained_{}.pth").format(epoch))
+    if use_paths:
+        torch.save(model.state_dict(),
+                   (folder_name + "trained_{}_paths.pth").format(epoch))
+    else:
+        torch.save(model.state_dict(),
+                   (folder_name + "trained_{}.pth").format(epoch))
     print("Done saving Model")
 
 
@@ -95,7 +98,7 @@ def plot_grad_flow(named_parameters, parameters):
     layers = []
 
     for n, p in zip(named_parameters, parameters):
-        if(p.requires_grad) and ("bias" not in n):
+        if (p.requires_grad) and ("bias" not in n):
             layers.append(n)
             ave_grads.append(p.grad.abs().mean())
             max_grads.append(p.grad.abs().max())
@@ -121,7 +124,7 @@ def plot_grad_flow_low(named_parameters, parameters):
     layers = []
     for n, p in zip(named_parameters, parameters):
         # print(n)
-        if(p.requires_grad) and ("bias" not in n):
+        if (p.requires_grad) and ("bias" not in n):
             layers.append(n)
             ave_grads.append(p.grad.abs().mean())
     plt.plot(ave_grads, alpha=0.3, color="b")

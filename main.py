@@ -264,7 +264,7 @@ def train_gat(args):
         wandb.log({'epoch_loss': epoch_losses[-1]})
         if (epoch + 1) % 200 == 0 or (epoch + 1) == args.epochs_gat:
             save_model(model_gat, args.data, epoch,
-                       args.output_folder)
+                       args.output_folder, args.use_2hop)
 
 
 def train_conv(args):
@@ -284,9 +284,12 @@ def train_conv(args):
     if CUDA:
         model_conv.cuda()
         model_gat.cuda()
-
-    model_gat.load_state_dict(torch.load(
-        '{}/trained_{}.pth'.format(args.output_folder, args.epochs_gat - 1)))
+    if args.use_2hop:
+        model_gat.load_state_dict(torch.load(
+            '{}/trained_{}_paths.pth'.format(args.output_folder, args.epochs_gat - 1)))
+    else:
+        model_gat.load_state_dict(torch.load(
+            '{}/trained_{}.pth'.format(args.output_folder, args.epochs_gat - 1)))
     model_conv.final_entity_embeddings = model_gat.final_entity_embeddings
     model_conv.final_relation_embeddings = model_gat.final_relation_embeddings
 
