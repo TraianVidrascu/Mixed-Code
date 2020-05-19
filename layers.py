@@ -147,11 +147,11 @@ class SpGraphAttentionLayer(nn.Module):
         if self.concat:
             # if this layer is not last layer,
             h_prime = F.elu(h_prime)
-            h_prime = F.normalize(h_prime, p=2, dim=-1)
+            #h_prime = F.normalize(h_prime, p=2, dim=-1)
             return h_prime
         else:
             # if this layer is last layer,
-            h_prime = F.normalize(h_prime, p=2, dim=-1)
+            #h_prime = F.normalize(h_prime, p=2, dim=-1)
             return h_prime
 
     def __repr__(self):

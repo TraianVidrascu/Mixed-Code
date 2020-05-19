@@ -193,8 +193,10 @@ class SpKBGATModified(nn.Module):
         self.final_relation_embeddings = nn.Parameter(
             torch.randn(self.num_relation, self.entity_out_dim_1 * self.nheads_GAT_1))
 
-        self.entity_embeddings = nn.Parameter(initial_entity_emb)
-        self.relation_embeddings = nn.Parameter(initial_relation_emb)
+        entity_emb = F.normalize(
+            initial_entity_emb, p=2, dim=1).detach()
+        self.entity_embeddings = nn.Parameter(entity_emb,True)
+        self.relation_embeddings = nn.Parameter(initial_relation_emb,True)
 
         self.sparse_gat_1 = SpGAT(self.num_nodes, self.entity_in_dim, self.entity_out_dim_1, self.relation_dim,
                                   self.drop_GAT, self.alpha, self.nheads_GAT_1)
@@ -227,8 +229,7 @@ class SpKBGATModified(nn.Module):
 
         start = time.time()
 
-        self.entity_embeddings.data = F.normalize(
-            self.entity_embeddings.data, p=2, dim=1).detach()
+
 
         # self.relation_embeddings.data = F.normalize(
         #     self.relation_embeddings.data, p=2, dim=1)
