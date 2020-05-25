@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+import numpy as np
 import time
-from layers import SpGraphAttentionLayer, ConvKB
+from layers import SpGraphAttentionLayer, ConvKB, ConvE
 from torch_scatter import scatter_add
 
 CUDA = torch.cuda.is_available()  # checking cuda availability
@@ -195,8 +196,8 @@ class SpKBGATModified(nn.Module):
 
         entity_emb = F.normalize(
             initial_entity_emb, p=2, dim=1).detach()
-        self.entity_embeddings = nn.Parameter(entity_emb,True)
-        self.relation_embeddings = nn.Parameter(initial_relation_emb,True)
+        self.entity_embeddings = nn.Parameter(entity_emb, True)
+        self.relation_embeddings = nn.Parameter(initial_relation_emb, True)
 
         self.sparse_gat_1 = SpGAT(self.num_nodes, self.entity_in_dim, self.entity_out_dim_1, self.relation_dim,
                                   self.drop_GAT, self.alpha, self.nheads_GAT_1)
@@ -228,8 +229,6 @@ class SpKBGATModified(nn.Module):
         edge_embed = self.relation_embeddings[edge_type]
 
         start = time.time()
-
-
 
         # self.relation_embeddings.data = F.normalize(
         #     self.relation_embeddings.data, p=2, dim=1)
@@ -291,21 +290,16 @@ class SpKBGATConvOnly(nn.Module):
         self.final_relation_embeddings = nn.Parameter(
             torch.randn(self.num_relation, self.entity_out_dim_1 * self.nheads_GAT_1))
 
-        self.convKB = ConvKB(self.entity_out_dim_1 * self.nheads_GAT_1, 3, 1,
-                             self.conv_out_channels, self.drop_conv, self.alpha_conv)
+        self.conv = ConvE(self.entity_out_dim_1 * self.nheads_GAT_1, self.conv_out_channels)
 
     def forward(self, Corpus_, adj, batch_inputs):
-        conv_input = torch.cat(
-            (self.final_entity_embeddings[batch_inputs[:, 0], :].unsqueeze(1), self.final_relation_embeddings[
-                batch_inputs[:, 1]].unsqueeze(1), self.final_entity_embeddings[batch_inputs[:, 2], :].unsqueeze(1)),
-            dim=1)
-        out_conv = self.convKB(conv_input)
+        edge_idx = torch.stack([batch_inputs[:, 0], batch_inputs[:, 2]])
+        edge_type = batch_inputs[:, 1]
+        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, edge_idx, edge_type)
         return out_conv
 
     def batch_test(self, batch_inputs):
-        conv_input = torch.cat(
-            (self.final_entity_embeddings[batch_inputs[:, 0], :].unsqueeze(1), self.final_relation_embeddings[
-                batch_inputs[:, 1]].unsqueeze(1), self.final_entity_embeddings[batch_inputs[:, 2], :].unsqueeze(1)),
-            dim=1)
-        out_conv = self.convKB(conv_input)
+        edge_idx = np.stack([batch_inputs[:, 0], batch_inputs[:, 2]])
+        edge_type = batch_inputs[:, 1]
+        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, edge_idx, edge_type)
         return out_conv

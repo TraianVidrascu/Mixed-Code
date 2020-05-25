@@ -36,6 +36,43 @@ class ConvKB(nn.Module):
         output = self.fc_layer(input_fc)
         return output
 
+class ConvE(nn.Module):
+    def __init__(self, embedding_size, out_channels, input_drop=0.2, hidden_drop=0.2, feat_drop=0.3):
+        super(ConvE, self).__init__()
+        self.hidden_size = embedding_size
+        self.out_channels = out_channels
+
+        self.conv = nn.Conv2d(1, out_channels, kernel_size=(2, 1),
+                              bias=True)
+        self.fc1 = nn.Linear(out_channels * embedding_size, embedding_size)
+
+        self.bn1 = nn.BatchNorm2d(1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.bn3 = nn.BatchNorm1d(embedding_size)
+
+        self.input_drop = torch.nn.Dropout(input_drop)
+        self.hidden_drop = torch.nn.Dropout(hidden_drop)
+        self.feature_map_drop = torch.nn.Dropout2d(feat_drop)
+
+    def forward(self, h, g, edge_idx, edge_type):
+        row, col = edge_idx
+        rel = edge_type
+
+        c_ik = torch.stack([h[row, :], g[rel, :]], dim=1).unsqueeze(1)
+        self.input_drop(c_ik)
+        c_ik = self.bn1(c_ik)
+        c_j = h[col, :]
+        h = self.conv(c_ik)
+        h = self.feature_map_drop(h)
+        self.bn2(h)
+        h = F.relu(h)
+        h = h.view(h.shape[0], -1)
+        h = self.fc1(h)
+        h = self.hidden_drop(h)
+        h = self.bn3(h)
+        h = F.relu(h)
+        h = torch.sum(h * c_j, dim=1).unsqueeze(-1)
+        return h
 
 class SpecialSpmmFunctionFinal(torch.autograd.Function):
     """Special function for only sparse region backpropataion layer."""
