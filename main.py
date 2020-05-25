@@ -11,7 +11,7 @@ from copy import deepcopy
 
 from preprocess import read_entity_from_id, read_relation_from_id, init_embeddings, build_data
 from create_batch import Corpus
-from utils import save_model
+from utils import save_model, save_final
 
 import random
 import argparse
@@ -265,6 +265,8 @@ def train_gat(args):
         if (epoch + 1) % 200 == 0 or (epoch + 1) == args.epochs_gat:
             save_model(model_gat, args.data, epoch,
                        args.output_folder, args.use_2hop)
+        if (epoch + 1) == args.epochs_gat:
+            save_final(model_gat, 'encoder', wandb.run.dir, args.use_2hop)
 
 
 def train_conv(args):
@@ -362,15 +364,22 @@ def train_conv(args):
         wandb.log({'epoch_loss': epoch_losses[-1]})
         if (epoch + 1) % 50 == 0 or (epoch + 1) == args.epochs_conv:
             save_model(model_conv, args.data, epoch,
-                       args.output_folder + "conv/")
+                       args.output_folder + "conv/", args.use_2hop)
+        if (epoch + 1) == args.epochs_conv:
+            save_final(model_conv, 'decoder', wandb.run.dir, args.use_2hop)
 
 
 def evaluate_conv(args, unique_entities):
     model_conv = SpKBGATConvOnly(entity_embeddings, relation_embeddings, args.entity_out_dim, args.entity_out_dim,
                                  args.drop_GAT, args.drop_conv, args.alpha, args.alpha_conv,
                                  args.nheads_GAT, args.out_channels)
-    model_conv.load_state_dict(torch.load(
-        '{0}conv/trained_{1}.pth'.format(args.output_folder, args.epochs_conv - 1)))
+    if args.use_2hop:
+        model_conv.load_state_dict(torch.load(
+            '{0}conv/trained_{1}_paths.pth'.format(args.output_folder, args.epochs_conv - 1)))
+
+    else:
+        model_conv.load_state_dict(torch.load(
+            '{0}conv/trained_{1}.pth'.format(args.output_folder, args.epochs_conv - 1)))
 
     model_conv.cuda()
     model_conv.eval()

@@ -14,7 +14,7 @@ from create_batch import Corpus
 
 import random
 import argparse
-import os
+import os.path as osp
 import logging
 import time
 import pickle
@@ -30,6 +30,17 @@ def save_model(model, name, epoch, folder_name, use_paths=False):
     else:
         torch.save(model.state_dict(),
                    (folder_name + "trained_{}.pth").format(epoch))
+    print("Done saving Model")
+
+
+def save_final(model, name, folder_name, use_paths=False):
+    print("Saving Model")
+    if use_paths:
+        path = osp.join(folder_name, name + "_final_paths.pth")
+        torch.save(model.state_dict(), path)
+    else:
+        path = osp.join(folder_name, name + "_final.pth")
+        torch.save(model.state_dict(), path)
     print("Done saving Model")
 
 
