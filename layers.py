@@ -54,11 +54,8 @@ class ConvE(nn.Module):
         self.hidden_drop = torch.nn.Dropout(hidden_drop)
         self.feature_map_drop = torch.nn.Dropout2d(feat_drop)
 
-    def forward(self, h, g, edge_idx, edge_type):
-        row, col = edge_idx
-        rel = edge_type
-
-        c_ik = torch.stack([h[row, :], g[rel, :]], dim=1).unsqueeze(1)
+    def forward(self, h, g,   row, col, edge_type):
+        c_ik = torch.stack([h[row, :], g[edge_type, :]], dim=1).unsqueeze(1)
         self.input_drop(c_ik)
         c_ik = self.bn1(c_ik)
         c_j = h[col, :]

@@ -43,7 +43,7 @@ def parse_args():
                       default=True, help="Use pretrained embeddings")
     args.add_argument("-emb_size", "--embedding_size", type=int,
                       default=50, help="Size of embeddings (if pretrained not used)")
-    args.add_argument("-l", "--lr", type=float, default=1e-3)
+    args.add_argument("-l", "--lr", type=float, default=1e-2)
     args.add_argument("-g2hop", "--get_2hop", type=int, default=0)
     args.add_argument("-u2hop", "--use_2hop", type=int, default=1)
     args.add_argument("-p2hop", "--partial_2hop", type=int, default=0)
@@ -187,7 +187,7 @@ def train_gat(args):
 
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=500, gamma=0.5, last_epoch=-1)
-
+    torch.nn.utils.clip_grad_norm(model_gat.parameters(), 1)
     gat_loss_func = nn.MarginRankingLoss(margin=args.margin)
 
     current_batch_2hop_indices = torch.tensor([])

@@ -293,13 +293,11 @@ class SpKBGATConvOnly(nn.Module):
         self.conv = ConvE(self.entity_out_dim_1 * self.nheads_GAT_1, self.conv_out_channels)
 
     def forward(self, Corpus_, adj, batch_inputs):
-        edge_idx = torch.stack([batch_inputs[:, 0], batch_inputs[:, 2]])
         edge_type = batch_inputs[:, 1]
-        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, edge_idx, edge_type)
+        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings,  batch_inputs[:, 0], batch_inputs[:, 2], edge_type)
         return out_conv
 
     def batch_test(self, batch_inputs):
-        edge_idx = np.stack([batch_inputs[:, 0], batch_inputs[:, 2]])
         edge_type = batch_inputs[:, 1]
-        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, edge_idx, edge_type)
+        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings,  batch_inputs[:, 0], batch_inputs[:, 2], edge_type)
         return out_conv
