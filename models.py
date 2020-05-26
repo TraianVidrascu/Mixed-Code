@@ -291,16 +291,21 @@ class SpKBGATConvOnly(nn.Module):
         self.final_relation_embeddings = nn.Parameter(
             torch.randn(self.num_relation, self.entity_out_dim_1 * self.nheads_GAT_1))
 
-        self.conv = ConvE(self.entity_out_dim_1 * self.nheads_GAT_1, self.conv_out_channels)
+        self.convKB = ConvKB(self.entity_out_dim_1 * self.nheads_GAT_1, 3, 1,
+                             self.conv_out_channels, self.drop_conv, self.alpha_conv)
 
     def forward(self, Corpus_, adj, batch_inputs):
-        edge_type = batch_inputs[:, 1]
-        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, batch_inputs[:, 0],
-                             batch_inputs[:, 2], edge_type)
+        conv_input = torch.cat(
+            (self.final_entity_embeddings[batch_inputs[:, 0], :].unsqueeze(1), self.final_relation_embeddings[
+                batch_inputs[:, 1]].unsqueeze(1), self.final_entity_embeddings[batch_inputs[:, 2], :].unsqueeze(1)),
+            dim=1)
+        out_conv = self.convKB(conv_input)
         return out_conv
 
     def batch_test(self, batch_inputs):
-        edge_type = batch_inputs[:, 1]
-        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, batch_inputs[:, 0],
-                             batch_inputs[:, 2], edge_type)
+        conv_input = torch.cat(
+            (self.final_entity_embeddings[batch_inputs[:, 0], :].unsqueeze(1), self.final_relation_embeddings[
+                batch_inputs[:, 1]].unsqueeze(1), self.final_entity_embeddings[batch_inputs[:, 2], :].unsqueeze(1)),
+            dim=1)
+        out_conv = self.convKB(conv_input)
         return out_conv
