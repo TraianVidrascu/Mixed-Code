@@ -647,11 +647,11 @@ class Corpus:
         }
         wandb.log(metrics)
         metrics = {
-            "head Hits@100": sum(average_hits_at_100_tail) / len(average_hits_at_100_tail),
-            "head Hits@10": sum(average_hits_at_ten_tail) / len(average_hits_at_ten_tail),
-            "head Hits@3": sum(average_hits_at_three_tail) / len(average_hits_at_three_tail),
-            "head Hits@1": sum(average_hits_at_one_tail) / len(average_hits_at_one_tail),
-            "head Mean Rank": sum(average_mean_rank_tail) / len(average_mean_rank_tail),
-            "head Mean Reciprocal Rank": sum(average_mean_recip_rank_tail) / len(average_mean_recip_rank_tail)
+            "head Hits@100": sum(average_hits_at_100_head) / len(average_hits_at_100_head),
+            "head Hits@10": sum(average_hits_at_ten_head) / len(average_hits_at_ten_head),
+            "head Hits@3": sum(average_hits_at_three_head) / len(average_hits_at_three_head),
+            "head Hits@1": sum(average_hits_at_one_head) / len(average_hits_at_one_head),
+            "head Mean Rank": sum(average_mean_rank_head) / len(average_mean_rank_head),
+            "head Mean Reciprocal Rank": sum(average_mean_recip_rank_head) / len(average_mean_recip_rank_head)
         }
         wandb.log(metrics)
