@@ -20,13 +20,14 @@ class MergeLayer(nn.Module):
         self.to(device)
 
     def forward(self, h_inbound, h_outbound):
-        h_inbound = self.weight_inbound(h_inbound)
-        h_outbound = self.weight_outbound(h_outbound)
-        lambda_param = self.lambda_layer(torch.cat([h_inbound, h_outbound], dim=1))
-        lambda_param = torch.sigmoid(lambda_param)
-        h = lambda_param * h_inbound + (1 - lambda_param) * h_outbound
-        h = F.elu(h)
-        h = F.normalize(h, dim=1, p=2)
+        # h_inbound = self.weight_inbound(h_inbound)
+        # h_outbound = self.weight_outbound(h_outbound)
+        # lambda_param = self.lambda_layer(torch.cat([h_inbound, h_outbound], dim=1))
+        # lambda_param = torch.sigmoid(lambda_param)
+        # h = lambda_param * h_inbound + (1 - lambda_param) * h_outbound
+        # h = F.elu(h)
+        # h = F.normalize(h, dim=1, p=2)
+        h = h_outbound + h_inbound
         return h
 
     def init_params(self):
@@ -294,10 +295,12 @@ class SpKBGATConvOnly(nn.Module):
 
     def forward(self, Corpus_, adj, batch_inputs):
         edge_type = batch_inputs[:, 1]
-        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings,  batch_inputs[:, 0], batch_inputs[:, 2], edge_type)
+        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, batch_inputs[:, 0],
+                             batch_inputs[:, 2], edge_type)
         return out_conv
 
     def batch_test(self, batch_inputs):
         edge_type = batch_inputs[:, 1]
-        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings,  batch_inputs[:, 0], batch_inputs[:, 2], edge_type)
+        out_conv = self.conv(self.final_entity_embeddings, self.final_relation_embeddings, batch_inputs[:, 0],
+                             batch_inputs[:, 2], edge_type)
         return out_conv
