@@ -30,7 +30,7 @@ def parse_args():
     args = argparse.ArgumentParser()
     # network arguments
     args.add_argument("-data", "--data",
-                      default="./data/WN18RR/", help="data directory")
+                      default="./data/software-376/", help="data directory")
     args.add_argument("-e_g", "--epochs_gat", type=int,
                       default=3600, help="Number of epochs")
     args.add_argument("-e_c", "--epochs_conv", type=int,
@@ -43,16 +43,18 @@ def parse_args():
                       default=True, help="Use pretrained embeddings")
     args.add_argument("-emb_size", "--embedding_size", type=int,
                       default=50, help="Size of embeddings (if pretrained not used)")
-    args.add_argument("-l", "--lr", type=float, default=1e-2)
+    args.add_argument("-l", "--lr", type=float, default=1e-3)
     args.add_argument("-g2hop", "--get_2hop", type=int, default=0)
-    args.add_argument("-u2hop", "--use_2hop", type=int, default=1)
+    args.add_argument("-u2hop", "--use_2hop", type=int, default=0)
     args.add_argument("-p2hop", "--partial_2hop", type=int, default=0)
     args.add_argument("-outfolder", "--output_folder",
-                      default="./checkpoints/pula/out/", help="Folder name to save the models.")
+                      default="./checkpoints/software/out/", help="Folder name to save the models.")
+
+    args.add_argument("--use_simple_layer", type=int, default=0, help="Use simple relation layer.")
 
     # arguments for GAT
     args.add_argument("-b_gat", "--batch_size_gat", type=int,
-                      default=86835, help="Batch size for GAT")
+                      default=540, help="Batch size for GAT")
     args.add_argument("-neg_s_gat", "--valid_invalid_ratio_gat", type=int,
                       default=2, help="Ratio of valid to invalid triples for GAT training")
     args.add_argument("-drop_GAT", "--drop_GAT", type=float,
@@ -64,16 +66,16 @@ def parse_args():
     args.add_argument("-h_gat", "--nheads_GAT", type=int, nargs='+',
                       default=[2, 2], help="Multihead attention SpGAT")
     args.add_argument("-margin", "--margin", type=float,
-                      default=5, help="Margin used in hinge loss")
+                      default=1, help="Margin used in hinge loss")
 
     # arguments for convolution network
     args.add_argument("-b_conv", "--batch_size_conv", type=int,
-                      default=128, help="Batch size for conv")
+                      default=64, help="Batch size for conv")
     args.add_argument("-alpha_conv", "--alpha_conv", type=float,
                       default=0.2, help="LeakyRelu alphas for conv layer")
-    args.add_argument("-neg_s_conv", "--valid_invalid_ratio_conv", type=int, default=40,
+    args.add_argument("-neg_s_conv", "--valid_invalid_ratio_conv", type=int, default=200,
                       help="Ratio of valid to invalid triples for convolution training")
-    args.add_argument("-o", "--out_channels", type=int, default=500,
+    args.add_argument("-o", "--out_channels", type=int, default=10,
                       help="Number of output channels in conv layer")
     args.add_argument("-drop_conv", "--drop_conv", type=float,
                       default=0.0, help="Dropout probability for convolution layer")
@@ -86,6 +88,7 @@ args = parse_args()[0]
 args.get_2hop = True if args.get_2hop == 1 else False
 args.use_2hop = True if args.use_2hop == 1 else False
 args.partial_2hop = True if args.partial_2hop == 1 else False
+args.use_simple_layer = True if args.use_simple_layer == 1 else False
 
 
 # %%
@@ -176,7 +179,7 @@ def train_gat(args):
     print(
         "\nModel type -> GAT layer with {} heads used , Initital Embeddings training".format(args.nheads_GAT[0]))
     model_gat = SpKBGATModified(entity_embeddings, relation_embeddings, args.entity_out_dim, args.entity_out_dim,
-                                args.drop_GAT, args.alpha, args.nheads_GAT)
+                                args.drop_GAT, args.alpha, args.nheads_GAT, args.use_simple_layer)
     wandb.watch(model_gat, log="all")
 
     if CUDA:
@@ -187,7 +190,7 @@ def train_gat(args):
 
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=500, gamma=0.5, last_epoch=-1)
-    torch.nn.utils.clip_grad_norm(model_gat.parameters(), 1)
+    # torch.nn.utils.clip_grad_norm(model_gat.parameters(), 1)
     gat_loss_func = nn.MarginRankingLoss(margin=args.margin)
 
     current_batch_2hop_indices = torch.tensor([])
@@ -275,7 +278,7 @@ def train_conv(args):
 
     print("Defining model")
     model_gat = SpKBGATModified(entity_embeddings, relation_embeddings, args.entity_out_dim, args.entity_out_dim,
-                                args.drop_GAT, args.alpha, args.nheads_GAT)
+                                args.drop_GAT, args.alpha, args.nheads_GAT, args.use_simple_layer)
     print("Only Conv model trained")
     model_conv = SpKBGATConvOnly(entity_embeddings, relation_embeddings, args.entity_out_dim, args.entity_out_dim,
                                  args.drop_GAT, args.drop_conv, args.alpha, args.alpha_conv,

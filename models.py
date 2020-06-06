@@ -15,7 +15,8 @@ class MergeLayer(nn.Module):
         super(MergeLayer, self).__init__()
         self.weight_inbound = nn.Linear(h_size, h_size, bias=True)
         self.weight_outbound = nn.Linear(h_size, h_size, bias=True)
-        self.lambda_layer = nn.Linear(h_size * 2, 1, bias=True)
+        #self.lambda_layer = nn.Linear(h_size * 2, 1, bias=True)
+        self.lambda_layer = nn.Parameter(torch.tensor(0.5),requires_grad=True)
         self.init_params()
         self.to(device)
 
@@ -27,7 +28,7 @@ class MergeLayer(nn.Module):
         # h = lambda_param * h_inbound + (1 - lambda_param) * h_outbound
         # h = F.elu(h)
         # h = F.normalize(h, dim=1, p=2)
-        h = h_outbound + h_inbound
+        h = self.lambda_param * h_outbound + (1 - self.lambda_param) * h_inbound
         return h
 
     def init_params(self):
@@ -38,6 +39,24 @@ class MergeLayer(nn.Module):
         nn.init.zeros_(self.weight_inbound.bias)
         nn.init.zeros_(self.weight_outbound.bias)
         nn.init.zeros_(self.lambda_layer.bias)
+
+
+class SimplerRelationLayer(nn.Module):
+    def __init__(self, in_size, out_size, device):
+        super(SimplerRelationLayer, self).__init__()
+        self.W = nn.Parameter(torch.zeros(size=(in_size, out_size)))
+
+        self.init_params()
+        self.to(device)
+
+        self.dev = device
+
+    def init_params(self):
+        nn.init.xavier_uniform_(self.W.data, gain=1.414)
+
+    def forward(self, g_initial):
+        g = g_initial.mm(self.W)
+        return g
 
 
 class RelationLayer(nn.Module):
@@ -64,7 +83,7 @@ class RelationLayer(nn.Module):
 
 
 class SpGAT(nn.Module):
-    def __init__(self, num_nodes, nfeat, nhid, relation_dim, dropout, alpha, nheads):
+    def __init__(self, num_nodes, nfeat, nhid, relation_dim, dropout, alpha, nheads, use_simple_layer=False):
         """
             Sparse version of GAT
             nfeat -> Entity Input Embedding dimensions
@@ -83,7 +102,12 @@ class SpGAT(nn.Module):
         self.dropout_layer = nn.Dropout(self.dropout)
         self.merge_input = MergeLayer(nhid * nheads)
         self.merge_output = MergeLayer(nhid * nheads)
-        self.rel_layer = RelationLayer(relation_dim, nhid * nheads, dev)
+
+        self.use_simple_layer = use_simple_layer
+        if use_simple_layer:
+            self.rel_layer = SimplerRelationLayer(relation_dim, nhid * nheads, dev)
+        else:
+            self.rel_layer = RelationLayer(relation_dim, nhid * nheads, dev)
 
         self.attentions_inbound = [SpGraphAttentionLayer(num_nodes, nfeat,
                                                          nhid,
@@ -143,8 +167,10 @@ class SpGAT(nn.Module):
 
         x = self.merge_input(x_in, x_out)
         x = self.dropout_layer(x)
-
-        out_relation_1 = self.rel_layer(relation_embed, edge_embed, edge_type)
+        if self.use_simple_layer:
+            out_relation_1 = self.rel_layer(relation_embed)
+        else:
+            out_relation_1 = self.rel_layer(relation_embed, edge_embed, edge_type)
 
         edge_embed = out_relation_1[edge_type]
         if edge_type_nhop is not None:
@@ -163,7 +189,7 @@ class SpGAT(nn.Module):
 
 class SpKBGATModified(nn.Module):
     def __init__(self, initial_entity_emb, initial_relation_emb, entity_out_dim, relation_out_dim,
-                 drop_GAT, alpha, nheads_GAT):
+                 drop_GAT, alpha, nheads_GAT, use_simple_layer):
         '''Sparse version of KBGAT
         entity_in_dim -> Entity Input Embedding dimensions
         entity_out_dim  -> Entity Output Embedding dimensions, passed as a list
@@ -188,6 +214,7 @@ class SpKBGATModified(nn.Module):
 
         self.drop_GAT = drop_GAT
         self.alpha = alpha  # For leaky relu
+        self.use_simple_layer = use_simple_layer  # For leaky relu
 
         self.final_entity_embeddings = nn.Parameter(
             torch.randn(self.num_nodes, self.entity_out_dim_1 * self.nheads_GAT_1))
@@ -201,7 +228,7 @@ class SpKBGATModified(nn.Module):
         self.relation_embeddings = nn.Parameter(initial_relation_emb, True)
 
         self.sparse_gat_1 = SpGAT(self.num_nodes, self.entity_in_dim, self.entity_out_dim_1, self.relation_dim,
-                                  self.drop_GAT, self.alpha, self.nheads_GAT_1)
+                                  self.drop_GAT, self.alpha, self.nheads_GAT_1, self.use_simple_layer)
 
         self.W_entities = nn.Parameter(torch.zeros(
             size=(self.entity_in_dim, self.entity_out_dim_1 * self.nheads_GAT_1)))
