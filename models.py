@@ -34,11 +34,11 @@ class MergeLayer(nn.Module):
     def init_params(self):
         nn.init.xavier_normal_(self.weight_inbound.weight, gain=1.414)
         nn.init.xavier_normal_(self.weight_outbound.weight, gain=1.414)
-        nn.init.xavier_normal_(self.lambda_layer.weight, gain=1.414)
+        #nn.init.xavier_normal_(self.lambda_layer.weight, gain=1.414)
 
         nn.init.zeros_(self.weight_inbound.bias)
         nn.init.zeros_(self.weight_outbound.bias)
-        nn.init.zeros_(self.lambda_layer.bias)
+        #nn.init.zeros_(self.lambda_layer.bias)
 
 
 class SimplerRelationLayer(nn.Module):
