@@ -16,7 +16,7 @@ class MergeLayer(nn.Module):
         self.weight_inbound = nn.Linear(h_size, h_size, bias=True)
         self.weight_outbound = nn.Linear(h_size, h_size, bias=True)
         #self.lambda_layer = nn.Linear(h_size * 2, 1, bias=True)
-        self.lambda_layer = nn.Parameter(torch.tensor(0.5),requires_grad=True)
+        self.lambda_param = nn.Parameter(torch.tensor(0.5),requires_grad=True)
         self.init_params()
         self.to(device)
 
