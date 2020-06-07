@@ -190,7 +190,7 @@ def train_gat(args):
 
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=500, gamma=0.5, last_epoch=-1)
-    # torch.nn.utils.clip_grad_norm(model_gat.parameters(), 1)
+    torch.nn.utils.clip_grad_norm(model_gat.parameters(), 1)
     gat_loss_func = nn.MarginRankingLoss(margin=args.margin)
 
     current_batch_2hop_indices = torch.tensor([])
@@ -306,7 +306,7 @@ def train_conv(args):
 
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=25, gamma=0.5, last_epoch=-1)
-    torch.nn.utils.clip_grad_norm(model_conv.parameters(), 0.5)
+    torch.nn.utils.clip_grad_norm(model_conv.parameters(), 1)
 
     margin_loss = torch.nn.SoftMarginLoss()
 
