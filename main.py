@@ -70,10 +70,10 @@ def parse_args():
 
     # arguments for convolution network
     args.add_argument("-b_conv", "--batch_size_conv", type=int,
-                      default=64, help="Batch size for conv")
+                      default=128, help="Batch size for conv")
     args.add_argument("-alpha_conv", "--alpha_conv", type=float,
                       default=0.2, help="LeakyRelu alphas for conv layer")
-    args.add_argument("-neg_s_conv", "--valid_invalid_ratio_conv", type=int, default=200,
+    args.add_argument("-neg_s_conv", "--valid_invalid_ratio_conv", type=int, default=40,
                       help="Ratio of valid to invalid triples for convolution training")
     args.add_argument("-o", "--out_channels", type=int, default=10,
                       help="Number of output channels in conv layer")
