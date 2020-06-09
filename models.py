@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import numpy as np
 import time
 from layers import SpGraphAttentionLayer, ConvKB, ConvE
-from torch_scatter import scatter_add
+from torch_scatter import scatter_add, scatter_mean
 
 CUDA = torch.cuda.is_available()  # checking cuda availability
 
@@ -77,9 +77,9 @@ class RelationLayer(nn.Module):
 
     def forward(self, g_initial, c_ijk, edge_type):
         h_ijk = c_ijk.mm(self.W)
-        g = scatter_add(h_ijk, edge_type, dim=0).squeeze()
+        g = scatter_mean(h_ijk, edge_type, dim=0).squeeze()
         g_prime = self.weights_rel(g_initial) + g
-        g_prime = F.normalize(g_prime, p=2, dim=-1)
+        #g_prime = F.normalize(g_prime, p=2, dim=-1)
         return g_prime
 
 
