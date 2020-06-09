@@ -15,8 +15,8 @@ class MergeLayer(nn.Module):
         super(MergeLayer, self).__init__()
         self.weight_inbound = nn.Linear(h_size, h_size, bias=True)
         self.weight_outbound = nn.Linear(h_size, h_size, bias=True)
-        #self.lambda_layer = nn.Linear(h_size * 2, 1, bias=True)
-        self.lambda_param = nn.Parameter(torch.tensor(0.5),requires_grad=True)
+        # self.lambda_layer = nn.Linear(h_size * 2, 1, bias=True)
+        self.lambda_param = nn.Parameter(torch.tensor(0.5), requires_grad=True)
         self.init_params()
         self.to(device)
 
@@ -34,11 +34,11 @@ class MergeLayer(nn.Module):
     def init_params(self):
         nn.init.xavier_normal_(self.weight_inbound.weight, gain=1.414)
         nn.init.xavier_normal_(self.weight_outbound.weight, gain=1.414)
-        #nn.init.xavier_normal_(self.lambda_layer.weight, gain=1.414)
+        # nn.init.xavier_normal_(self.lambda_layer.weight, gain=1.414)
 
         nn.init.zeros_(self.weight_inbound.bias)
         nn.init.zeros_(self.weight_outbound.bias)
-        #nn.init.zeros_(self.lambda_layer.bias)
+        # nn.init.zeros_(self.lambda_layer.bias)
 
 
 class SimplerRelationLayer(nn.Module):
@@ -76,8 +76,9 @@ class RelationLayer(nn.Module):
         nn.init.xavier_uniform_(self.W.data, gain=1.414)
 
     def forward(self, g_initial, c_ijk, edge_type):
-        g = scatter_add(c_ijk, edge_type, dim=0).squeeze()
-        g_prime = self.weights_rel(g_initial) + g.mm(self.W)
+        h_ijk = c_ijk.mm(self.W)
+        g = scatter_add(h_ijk, edge_type, dim=0).squeeze()
+        g_prime = self.weights_rel(g_initial) + g
         g_prime = F.normalize(g_prime, p=2, dim=-1)
         return g_prime
 
