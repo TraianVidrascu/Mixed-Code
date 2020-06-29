@@ -379,6 +379,9 @@ class Corpus:
 
             for i in range(batch_indices.shape[0]):
                 print(len(ranks_head))
+                print('type:'+str(batch_indices[i][1]))
+
+
                 start_time_it = time.time()
                 new_x_batch_head = np.tile(
                     batch_indices[i, :], (len(self.entity2id), 1))
