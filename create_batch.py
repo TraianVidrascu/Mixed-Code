@@ -6,6 +6,7 @@ import queue
 import random
 import wandb
 
+import pickle as pk
 
 class Corpus:
     def __init__(self, args, train_data, validation_data, test_data, entity2id,
@@ -627,6 +628,7 @@ class Corpus:
         print("Hits@1 are {}".format(cumulative_hits_one))
         print("Mean rank {}".format(cumulative_mean_rank))
         print("Mean Reciprocal Rank {}".format(cumulative_mean_recip_rank))
+
         metrics = {
             "Hits@100": cumulative_hits_100,
             "Hits@10": cumulative_hits_ten,
@@ -654,4 +656,8 @@ class Corpus:
             "head Mean Rank": sum(average_mean_rank_head) / len(average_mean_rank_head),
             "head Mean Reciprocal Rank": sum(average_mean_recip_rank_head) / len(average_mean_recip_rank_head)
         }
+        with open('rank_head.pkl', 'wb') as f:
+            pk.dump(average_mean_rank_head, f)
+        with open('rank_head.pkl', 'wb') as f:
+            pk.dump(average_mean_rank_tail, f)
         wandb.log(metrics)

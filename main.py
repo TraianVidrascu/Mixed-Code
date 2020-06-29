@@ -191,6 +191,7 @@ def train_gat(args):
     scheduler = torch.optim.lr_scheduler.StepLR(
         optimizer, step_size=500, gamma=0.5, last_epoch=-1)
     torch.nn.utils.clip_grad_norm(model_gat.parameters(), 0.1)
+
     gat_loss_func = nn.MarginRankingLoss(margin=args.margin)
 
     current_batch_2hop_indices = torch.tensor([])
@@ -390,8 +391,9 @@ def evaluate_conv(args, unique_entities):
         Corpus_.get_validation_pred(args, model_conv, unique_entities)
 
 
-wandb.init(project='DKBAT_mixed_code', config=args)
-train_gat(args)
 
-train_conv(args)
+wandb.init(project='DKBAT_mixed_code', config=args)
+# train_gat(args)
+#
+# train_conv(args)
 evaluate_conv(args, Corpus_.unique_entities_train)
