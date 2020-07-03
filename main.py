@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import torch
 import wandb
 from models import SpKBGATModified, SpKBGATConvOnly
@@ -30,7 +32,7 @@ def parse_args():
     args = argparse.ArgumentParser()
     # network arguments
     args.add_argument("-data", "--data",
-                      default="./data/software-376/", help="data directory")
+                      default="./data/ivy141-all/", help="data directory")
     args.add_argument("-e_g", "--epochs_gat", type=int,
                       default=3600, help="Number of epochs")
     args.add_argument("-e_c", "--epochs_conv", type=int,
@@ -48,7 +50,7 @@ def parse_args():
     args.add_argument("-u2hop", "--use_2hop", type=int, default=0)
     args.add_argument("-p2hop", "--partial_2hop", type=int, default=0)
     args.add_argument("-outfolder", "--output_folder",
-                      default="./checkpoints/software/out/", help="Folder name to save the models.")
+                      default="./checkpoints/ivy/out/", help="Folder name to save the models.")
 
     args.add_argument("--use_simple_layer", type=int, default=0, help="Use simple relation layer.")
 
@@ -391,9 +393,62 @@ def evaluate_conv(args, unique_entities):
         Corpus_.get_validation_pred(args, model_conv, unique_entities)
 
 
+def read_file():
+    file = open('./log.txt', 'r')
+    head_ranking = []
+    tail_ranking = []
+    rels = []
+    rel = -1
+    for line in file:
+        if 'type' in line:
+            line = line.strip('\n').split(':')
+            rel = int(line[1])
 
-wandb.init(project='DKBAT_mixed_code', config=args)
+        if 'sample' in line:
+            line = line.strip('\n').split(' ')
+            tail = int(line[-1])
+            head = int(line[-2])
+            head_ranking.append(head)
+            tail_ranking.append(tail)
+            rels.append(rel)
+    file.close()
+    return head_ranking, tail_ranking, rels
+
+
+# wandb.init(project='DKBAT_mixed_code', config=args)
 # train_gat(args)
 #
 # train_conv(args)
-evaluate_conv(args, Corpus_.unique_entities_train)
+# evaluate_conv(args, Corpus_.unique_entities_train)
+head_ranking, tail_ranking, rels = read_file()
+
+head_map = defaultdict(list)
+tail_map = defaultdict(list)
+
+print(len(rels))
+print(len(head_ranking))
+
+for i in range(len(rels)):
+    rel = rels[i]
+    head_map[rel].append(head_ranking[i])
+    tail_map[rel].append(tail_ranking[i])
+
+print(tail_map.keys())
+print(head_map.keys())
+
+MR_head = {}
+MR_tail = {}
+lengths = []
+for key in tail_map.keys():
+    ranks_tail = tail_map[key]
+    ranks_head = head_map[key]
+
+    rel = Corpus_.id2relation[key]
+
+    MR_head[rel] = sum(ranks_head) / len(ranks_head)
+    MR_tail[rel] = sum(ranks_tail) / len(ranks_tail)
+    lengths.append(len(ranks_head))
+
+print('Head Mean Rank - Tail Mean Rank')
+for key in MR_tail.keys():
+    print(key + ': %.2f - %.2f' % (MR_head[key], MR_tail[key]))
