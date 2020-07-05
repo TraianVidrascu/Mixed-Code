@@ -22,7 +22,7 @@ source activate base
 - Kinship
 - Ivy v1.4.1 software graph (Private company dataset)
 
-# Reproduce experiments
+# Reproduce Results
 - FB15k-237 
 ```bash
 python main.py --data ./data/FB15k-237/  --valid_invalid_ratio_conv 40  --out_channels 50 --drop_conv 0.3  --batch_size_conv 128  --epochs_gat 3000 --epochs_conv 150 --weight_decay_gat 0.00001 --use_2hop 0 --get_2hop 0 --partial_2hop 0 --batch_size_gat 272115 --margin 1 --out_channels 50 --drop_conv 0.3 --output_folder ./checkpoints/fb/out/
