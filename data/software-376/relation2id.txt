@@ -1,2 +1,0 @@
-java.call	0
-java.extends	1
