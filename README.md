@@ -23,6 +23,8 @@ source activate base
 - Ivy v1.4.1 software graph (Private company dataset)
 
 # Reproduce Results
+Before running the experiments make an [weights and biases account](https://www.wandb.com/).
+
 - FB15k-237 
 ```bash
 python main.py --data ./data/FB15k-237/  --valid_invalid_ratio_conv 40  --out_channels 50 --drop_conv 0.3  --batch_size_conv 128  --epochs_gat 3000 --epochs_conv 150 --weight_decay_gat 0.00001 --use_2hop 0 --get_2hop 0 --partial_2hop 0 --batch_size_gat 272115 --margin 1 --out_channels 50 --drop_conv 0.3 --output_folder ./checkpoints/fb/out/
@@ -35,8 +37,10 @@ python main.py --use_2hop 0 --get_2hop 0 --partial_2hop 0 --batch_size_conv 128 
 
 - Kinship
 ```bash
-python main.py --data ./data/kinship/ --epochs_gat 3000 --epochs_conv 400 --weight_decay_gat 0.00001 --use_2hop 1 --get_2hop 1 --partial_2hop 0 --batch_size_gat 8544 --margin 1 --out_channels 50 neg_s_conv 10 --drop_conv 0.3 --output_folder ./checkpoints/fb/out/
+python main.py --data ./data/kinship/ --epochs_gat 3000 --epochs_conv 400 --weight_decay_gat 0.00001 --use_2hop 1 --get_2hop 1 --partial_2hop 0 --batch_size_gat 8544 --margin 1 --out_channels 50 neg_s_conv 10 --drop_conv 0.3 --output_folder ./checkpoints/kinship/out/
 ``` 
+
+All the metrics are printed on the console and saved online on the weights and biases website, where the project name is NeighborhoodModel
 
 # License
 [Apache-2.0](https://choosealicense.com/licenses/apache-2.0/) 
